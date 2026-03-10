@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "529834062340",
+    "project_id": "goconnect-15c08",
+    "storage_bucket": "goconnect-15c08.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:529834062340:android:995693b20894db0f9f3b51",
+        "android_client_info": {
+          "package_name": "com.godivatech.goconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeVgf3uqjlT-vZyjeC6RldTJ_fsfICoZc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
