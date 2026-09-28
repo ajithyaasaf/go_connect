@@ -1,29 +1,46 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check ownership
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+
+    // Helper: Check if authenticated (including Firebase Anonymous Auth)
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Users Collection
+    // 1. Access Keys Collection (Checked during PIN login)
+    match /access_keys/{keyId} {
+      // Allow read so users can verify PIN on login
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // 2. Users Collection
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if isAuthenticated();
     }
 
-    // Meetings Collection
-    // Secured by 'userId' field on the document
+    // 3. Clients Directory
+    match /clients/{clientId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // 4. Meetings Collection
     match /meetings/{meetingId} {
-      // Read: Allow if the existing doc belongs to the user
-      allow read: if isOwner(resource.data.userId);
-      
-      // Create: Allow if the new doc claims to belong to the user
-      allow create: if isOwner(request.resource.data.userId) 
-                    && request.resource.data.clientName.size() > 0; // Basic validation
-      
-      // Update/Delete: Allow if the existing doc belongs to the user
-      allow update, delete: if isOwner(resource.data.userId);
+      allow read, write: if isAuthenticated();
+    }
+
+    // 5. Over-The-Air (OTA) Releases Subsystem
+    match /ota_releases/{releaseId} {
+      // Public read so the app can check for updates on startup & foreground
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // 6. Dynamic Remote Configuration & Announcements
+    match /app_config/{configId} {
+      // Public read so the app can render remote banners and dynamic lists
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
   }
 }

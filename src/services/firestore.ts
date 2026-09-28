@@ -7,6 +7,7 @@ import firestore, {
     setDoc,
     updateDoc,
     doc,
+    deleteDoc,
     serverTimestamp,
     Timestamp
 } from '@react-native-firebase/firestore';
@@ -138,7 +139,7 @@ class FirestoreService {
     async deleteMeeting(meetingId: string): Promise<void> {
         console.log(`[Firestore] deleteMeeting called for ID: ${meetingId}`);
         const db = firestore();
-        await db.collection('meetings').doc(meetingId).delete();
+        await deleteDoc(doc(db, 'meetings', meetingId));
         console.log(`[Firestore] deleteMeeting SUCCESS for ID: ${meetingId}`);
     }
 }

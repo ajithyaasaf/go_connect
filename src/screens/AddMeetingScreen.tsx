@@ -9,6 +9,7 @@ import { MeetingFormValues, MeetingSchema } from '../utils/validation';
 import { ConflictService } from '../services/conflict';
 import { SyncService } from '../services/sync';
 import { useMeetingStore } from '../store/useMeetingStore';
+import { useClientStore } from '../store/useClientStore';
 import { useOfflineStore } from '../store/useOfflineStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { notificationService } from '../services/notification';
@@ -161,11 +162,37 @@ const AddMeetingScreen = () => {
         const newId = uuidv4();
         const timestamp = Date.now();
 
+        // 1. Auto-save Client if entered manually
+        let finalClientId = selectedClient?.id;
+        if (!finalClientId && data.clientName?.trim()) {
+            finalClientId = uuidv4();
+            const newClient: Client = {
+                id: finalClientId,
+                userId: user?.id || 'unknown',
+                accessKey: user?.accessKey || 'default',
+                name: data.clientName.trim(),
+                phone: (data.clientPhone || '').trim(),
+                createdAt: new Date().toISOString(),
+            };
+
+            // Save to local store so they appear in ClientList
+            useClientStore.getState().addClient(newClient);
+
+            // Queue for cloud sync
+            addToQueue({
+                id: uuidv4(),
+                type: 'CREATE_CLIENT' as any,
+                payload: newClient,
+                timestamp,
+                retryCount: 0,
+            });
+        }
+
         const newMeeting: Meeting = {
             id: newId,
             userId: user?.id || 'unknown',
             accessKey: user?.accessKey || 'default',
-            clientId: selectedClient?.id || uuidv4(),
+            clientId: finalClientId || uuidv4(),
             clientName: data.clientName,
             clientPhone: data.clientPhone || '',
             purpose: data.purpose,
