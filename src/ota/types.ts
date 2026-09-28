@@ -15,6 +15,7 @@ export interface OtaRelease {
     minNativeVersion: string;     // Minimum native APK version required e.g. "1.0"
     channel: OtaChannel;
     bundleUrl: string;            // Direct HTTPS URL to index.android.bundle
+    apkDownloadUrl?: string;      // Direct HTTPS URL or PlayStore link if native APK update required
     hash: string;                 // SHA-256 integrity checksum
     sizeBytes: number;
     mandatory: boolean;          // If true, user is prompted to restart immediately
@@ -61,6 +62,7 @@ export interface OtaState {
     isMandatory: boolean;
     lastChecked: string | null;
     error: string | null;
+    installationId: string;
     autoDownloadEnabled: boolean;
     isModalVisible: boolean;
 

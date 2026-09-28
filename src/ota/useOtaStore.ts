@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { zustandStorage } from '../utils/storage';
+import { v4 as uuidv4 } from 'uuid';
 import { OtaState, OtaStatus, OtaChannel, OtaRelease, NativeBundleInfo, NativeAppVersionInfo } from './types';
 
 export const useOtaStore = create<OtaState>()(
@@ -20,6 +21,7 @@ export const useOtaStore = create<OtaState>()(
             isMandatory: false,
             lastChecked: null,
             error: null,
+            installationId: uuidv4(),
             autoDownloadEnabled: true,
             isModalVisible: false,
 
@@ -62,6 +64,7 @@ export const useOtaStore = create<OtaState>()(
                 currentBundleVersion: state.currentBundleVersion,
                 currentBundleHash: state.currentBundleHash,
                 lastChecked: state.lastChecked,
+                installationId: state.installationId,
                 autoDownloadEnabled: state.autoDownloadEnabled,
             }),
         }

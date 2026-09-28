@@ -2,10 +2,16 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, TextInput, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { authService } from '../services/auth';
 import { theme } from '../theme';
+import { useRemoteConfigStore } from '../services/remoteConfig';
+import { useOtaStore } from '../ota/useOtaStore';
+import { AlertTriangle } from 'lucide-react-native';
 
 const LoginScreen = () => {
     const [accessPin, setAccessPin] = useState('');
     const [loading, setLoading] = useState(false);
+    const isMaintenance = useRemoteConfigStore((s) => s.isMaintenance);
+    const maintenanceMessage = useRemoteConfigStore((s) => s.maintenanceMessage);
+    const { appVersion, currentBundleVersion, isOtaActive } = useOtaStore();
 
     const handleLogin = async () => {
         if (!accessPin || accessPin.length < 3) {
@@ -49,6 +55,14 @@ const LoginScreen = () => {
                 <Text style={styles.subtitle}>Secure Workspace</Text>
             </View>
 
+            {/* Maintenance notice if active */}
+            {isMaintenance && (
+                <View style={styles.maintenanceBox}>
+                    <AlertTriangle size={18} color="#DC2626" style={{ marginRight: 8 }} />
+                    <Text style={styles.maintenanceText}>{maintenanceMessage}</Text>
+                </View>
+            )}
+
             <View style={styles.form}>
                 <Text style={styles.label}>Access PIN</Text>
                 <TextInput
@@ -69,6 +83,13 @@ const LoginScreen = () => {
 
                 <Text style={styles.hint}>
                     Default PIN: <Text style={{ fontWeight: 'bold' }}>123456</Text>
+                </Text>
+            </View>
+
+            {/* Version and OTA footprint */}
+            <View style={styles.footer}>
+                <Text style={styles.footerText}>
+                    GoConnect v{appVersion} • {isOtaActive ? `OTA #${currentBundleVersion}` : 'Stock'}
                 </Text>
             </View>
         </View>
@@ -165,7 +186,32 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: theme.colors.textSecondary,
         fontWeight: '500'
-    }
+    },
+    maintenanceBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FEE2E2',
+        borderLeftWidth: 4,
+        borderLeftColor: '#DC2626',
+        padding: 12,
+        borderRadius: 10,
+        marginBottom: 20,
+    },
+    maintenanceText: {
+        flex: 1,
+        color: '#991B1B',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    footer: {
+        marginTop: 32,
+        alignItems: 'center',
+    },
+    footerText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: theme.colors.textLight,
+    },
 });
 
 export default LoginScreen;

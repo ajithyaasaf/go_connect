@@ -26,6 +26,8 @@ const bundleVersion = parseInt(params.bundleVersion || params.bundle || '101', 1
 const channel = params.channel || 'production';
 const minNativeVersion = params.minNativeVersion || params.minNative || '1.0';
 const mandatory = params.mandatory === 'true' || params.mandatory === true;
+const rolloutPercentage = parseInt(params.rollout || params.rolloutPercentage || '100', 10);
+const apkDownloadUrl = params.apkDownloadUrl || params.apkUrl || '';
 const releaseNotes = params.notes || 'Bug fixes, performance improvements, and user experience enhancements.';
 const bundleUrl = params.url || `https://storage.googleapis.com/goconnect-ota-bundles/releases/${channel}/${bundleVersion}/index.android.bundle`;
 
@@ -42,6 +44,8 @@ console.log(`Bundle Version:     ${bundleVersion}`);
 console.log(`Channel:            ${channel}`);
 console.log(`Min Native Ver:     ${minNativeVersion}`);
 console.log(`Mandatory Restart:  ${mandatory}`);
+console.log(`Rollout Percentage: ${rolloutPercentage}%`);
+if (apkDownloadUrl) console.log(`Fallback APK URL:   ${apkDownloadUrl}`);
 console.log(`Release Notes:      ${releaseNotes}`);
 console.log(`Output Directory:   ${outputDir}`);
 console.log('----------------------------------------------------');
@@ -86,7 +90,8 @@ const manifest = {
     mandatory,
     releaseNotes,
     releasedAt: new Date().toISOString(),
-    rolloutPercentage: 100,
+    rolloutPercentage,
+    ...(apkDownloadUrl ? { apkDownloadUrl } : {}),
     enabled: true,
 };
 

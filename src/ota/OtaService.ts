@@ -1,4 +1,4 @@
-import { NativeModules, NativeEventEmitter, Platform, Alert, AppState, AppStateStatus } from 'react-native';
+import { NativeModules, NativeEventEmitter, Platform, Alert, AppState, AppStateStatus, Linking } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { useOtaStore } from './useOtaStore';
 import { OtaRelease, OtaChannel, OtaDownloadProgressEvent, NativeAppVersionInfo, NativeBundleInfo } from './types';
@@ -142,12 +142,40 @@ class OtaService {
                 return null;
             }
 
-            // Check native version compatibility (optional basic comparison)
+            // 1. Check native version compatibility
             if (releaseData.minNativeVersion && this.isNativeOutdated(store.appVersion, releaseData.minNativeVersion)) {
                 console.warn(`[OTA] Update requires native APK ${releaseData.minNativeVersion}, but current is ${store.appVersion}. Skipping OTA.`);
+                if (isManual || releaseData.mandatory) {
+                    Alert.alert(
+                        'App Update Required',
+                        `This update contains core native changes that require a newer APK (v${releaseData.minNativeVersion} or higher).`,
+                        releaseData.apkDownloadUrl ? [
+                            { text: 'Later', style: 'cancel' },
+                            {
+                                text: 'Download APK',
+                                onPress: () => {
+                                    Linking.openURL(releaseData.apkDownloadUrl!).catch(err => {
+                                        console.error('[OTA] Failed to open APK download URL:', err);
+                                    });
+                                }
+                            }
+                        ] : [{ text: 'OK' }]
+                    );
+                }
                 store.setAvailableRelease(null);
                 store.setStatus('up_to_date');
                 return null;
+            }
+
+            // 2. Check Staged Rollout Percentage (Cohort bucketing)
+            if (typeof releaseData.rolloutPercentage === 'number' && releaseData.rolloutPercentage < 100) {
+                const userBucket = this.computeBucket(store.installationId || 'default');
+                if (userBucket >= releaseData.rolloutPercentage) {
+                    console.log(`[OTA] Device bucket (${userBucket}) is outside rollout window (${releaseData.rolloutPercentage}%). Skipping.`);
+                    store.setAvailableRelease(null);
+                    store.setStatus('up_to_date');
+                    return null;
+                }
             }
 
             console.log(`[OTA] Found newer bundle: v${releaseData.version} (Bundle #${releaseData.bundleVersion})`);
@@ -164,8 +192,13 @@ class OtaService {
             return releaseData;
         } catch (error: any) {
             console.error('[OTA] Error checking for updates:', error);
-            store.setError(error?.message || 'Failed to check for updates');
-            store.setStatus('error');
+            // On automatic checks, don't show disruptive error status to user
+            if (isManual) {
+                store.setError(error?.message || 'Failed to check for updates');
+                store.setStatus('error');
+            } else {
+                store.setStatus('idle');
+            }
             return null;
         }
     }
@@ -272,6 +305,18 @@ class OtaService {
             if (c > r) return false;
         }
         return false;
+    }
+
+    /**
+     * Computes a deterministic integer bucket (0 to 99) for staged rollouts based on installation ID.
+     */
+    private computeBucket(id: string): number {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++) {
+            hash = (hash << 5) - hash + id.charCodeAt(i);
+            hash |= 0; // Convert to 32bit integer
+        }
+        return Math.abs(hash) % 100;
     }
 
     /**
