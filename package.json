@@ -9,7 +9,8 @@
     "start": "react-native start",
     "test": "jest",
     "ota:bundle": "node scripts/release-ota.js",
-    "ota:release": "node scripts/release-ota.js"
+    "ota:release": "node scripts/release-ota.js",
+    "ota:publish": "node scripts/publish-ota.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
