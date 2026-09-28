@@ -1,4 +1,17 @@
 {
   "name": "GoConnect",
-  "displayName": "GoConnect"
+  "displayName": "GoConnect",
+  "expo": {
+    "name": "GoConnect",
+    "slug": "goconnect",
+    "version": "1.0.0",
+    "android": {
+      "package": "com.godivatech.goconnect"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d8a3b796-9d4b-47b1-a893-e8e5a63d5431"
+      }
+    }
+  }
 }
