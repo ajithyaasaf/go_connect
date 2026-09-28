@@ -1,0 +1,64 @@
+name: Automatic OTA Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'index.js'
+      - 'App.tsx'
+      - 'scripts/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ota-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-ota:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🚀 Build Bundle & Update Firestore
+        id: ota
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          OTA_CHANNEL: 'production'
+        run: node scripts/ci-deploy-ota.js
+
+      - name: 🏷️ Publish GitHub Release Asset
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: ${{ steps.ota.outputs.RELEASE_TAG }}
+          name: OTA Release ${{ steps.ota.outputs.RELEASE_TAG }}
+          body: |
+            ### 🚀 Automatic Over-The-Air Update
+            - **Bundle Version**: `${{ steps.ota.outputs.BUNDLE_VERSION }}`
+            - **Commit**: `${{ github.event.head_commit.message }}`
+            - **Triggered By**: `@${{ github.actor }}`
+          files: |
+            dist/ota/index.android.bundle
+            dist/ota/manifest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

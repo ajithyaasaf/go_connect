@@ -10,7 +10,8 @@
     "test": "jest",
     "ota:bundle": "node scripts/release-ota.js",
     "ota:release": "node scripts/release-ota.js",
-    "ota:publish": "node scripts/publish-ota.js"
+    "ota:publish": "node scripts/publish-ota.js",
+    "ota:ci": "node scripts/ci-deploy-ota.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -56,6 +57,7 @@
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.6.3",
     "eslint": "^8.19.0",
+    "firebase-admin": "^14.5.0",
     "jest": "^29.6.3",
     "prettier": "2.8.8",
     "react-test-renderer": "18.2.0",
