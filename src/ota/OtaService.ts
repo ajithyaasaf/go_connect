@@ -113,26 +113,27 @@ class OtaService {
         try {
             console.log(`[OTA] Checking for updates on channel: ${targetChannel}...`);
 
-            // Query Firestore collection `ota_releases`
+            // Query Firestore collection `ota_releases` (index-free query)
             const snapshot = await firestore()
                 .collection('ota_releases')
                 .where('channel', '==', targetChannel)
-                .where('enabled', '==', true)
-                .orderBy('bundleVersion', 'desc')
-                .limit(1)
                 .get();
 
             store.setLastChecked(new Date().toISOString());
 
-            if (snapshot.empty) {
+            const matchingReleases = snapshot.docs
+                .map(doc => doc.data() as OtaRelease)
+                .filter(release => release.enabled)
+                .sort((a, b) => (b.bundleVersion || 0) - (a.bundleVersion || 0));
+
+            if (matchingReleases.length === 0) {
                 console.log('[OTA] No releases found for channel:', targetChannel);
                 store.setAvailableRelease(null);
                 store.setStatus('up_to_date');
                 return null;
             }
 
-            const releaseDoc = snapshot.docs[0];
-            const releaseData = releaseDoc.data() as OtaRelease;
+            const releaseData = matchingReleases[0];
 
             // Check if newer than active bundle
             if (releaseData.bundleVersion <= store.currentBundleVersion) {

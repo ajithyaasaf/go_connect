@@ -77,18 +77,18 @@ async function run() {
             db = admin.firestore();
             console.log('✓ Authenticated with Firebase Admin SDK.');
 
-            // Query highest bundleVersion
+            // Query highest bundleVersion (index-free query)
             const snapshot = await db.collection('ota_releases')
                 .where('channel', '==', channel)
-                .orderBy('bundleVersion', 'desc')
-                .limit(1)
                 .get();
 
-            if (!snapshot.empty) {
-                const latestDoc = snapshot.docs[0].data();
-                if (typeof latestDoc.bundleVersion === 'number') {
-                    nextBundleVersion = latestDoc.bundleVersion + 1;
-                }
+            const releases = snapshot.docs
+                .map(doc => doc.data())
+                .filter(doc => typeof doc.bundleVersion === 'number')
+                .sort((a, b) => b.bundleVersion - a.bundleVersion);
+
+            if (releases.length > 0) {
+                nextBundleVersion = releases[0].bundleVersion + 1;
             }
         } catch (err) {
             console.warn('⚠️ Warning during Firestore query:', err.message);
