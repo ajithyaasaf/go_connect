@@ -18,8 +18,9 @@ npx eas-cli build -p android --profile preview
 ```
 *EAS will compile the Android APK in the cloud and provide a direct `.apk` download link & QR code to install on your phone or emulator.*
 
-#### 📱 Active Android Preview Build (with Notifications & Exact Alarms):
+#### 📱 Latest Complete APK (with Android 13+ Notifications & Exact Alarms):
 - **Build ID**: `ccfa2a79-ecd6-46dc-99b1-e97fc6439196`
+- **Direct APK Download**: [Download GoConnect APK (66.1 MB)](https://expo.dev/artifacts/eas/1hNVfQs3t0XhS4uDec6y0BkPHHy02GzVccDJyiZWKxs.apk)
 - **EAS Dashboard**: [View on Expo.dev](https://expo.dev/accounts/godivatech/projects/goconnect/builds/ccfa2a79-ecd6-46dc-99b1-e97fc6439196)
 
 #### 📱 Previous Baseline Build:
