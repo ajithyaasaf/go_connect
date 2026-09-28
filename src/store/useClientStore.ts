@@ -29,7 +29,7 @@ export const useClientStore = create<ClientState>()(
                     clients: state.clients.map((c) =>
                         c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c
                     ),
-                    updatedAt: Date.now(),
+                    updatedAt: new Date().toISOString(),
                 })),
             removeClient: (id) =>
                 set((state) => ({

@@ -41,9 +41,18 @@ const MeetingDetailsScreen = () => {
 
     const handleMarkDone = () => {
         updateMeeting(meeting.id, { status: 'completed' });
+        
+        addToQueue({
+            id: uuidv4(),
+            type: 'UPDATE_MEETING',
+            payload: { id: meeting.id, status: 'completed' },
+            timestamp: Date.now(),
+            retryCount: 0
+        });
+
         // Trigger sync for persistence
         SyncService.processQueue();
-        Alert.alert('Success', 'Meeting marked as completed', [{ text: 'OK', onPress: () => navigation.goBack() }]);
+        navigation.goBack();
     };
 
     const handleCall = () => {

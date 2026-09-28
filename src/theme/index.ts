@@ -33,6 +33,7 @@ export const colors = {
     warning: '#1A6B8A',      // Use Dark Primary
     error: '#EF4444',        // Keep standard red for errors (UX necessity)
     info: '#2596be',
+    border: '#E2E8F0',
 
     // UI Specific
     navBackground: '#0F3D56', // Deep Navy for Navigation
@@ -106,6 +107,13 @@ export const shadows = {
         shadowOpacity: 0.08,
         shadowRadius: 12,
         elevation: 3,
+    },
+    sharp: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
+        elevation: 2,
     },
     glow: {
         shadowColor: colors.secondary,

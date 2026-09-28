@@ -15,7 +15,7 @@ import { notificationService } from '../services/notification';
 import { firestoreService } from '../services/firestore';
 import { Client, Meeting } from '../services/schema';
 import { addDays, setHours, setMinutes, format, parseISO } from 'date-fns';
-import { Search, Plus, Calendar, Target, Activity, FileText } from 'lucide-react-native';
+import { Search, Plus, Calendar, Target, Activity, FileText, X, Check } from 'lucide-react-native';
 import { theme } from '../theme';
 import DatePicker from 'react-native-date-picker';
 
@@ -97,6 +97,12 @@ const AddMeetingScreen = () => {
         setValue('clientPhone', client.phone);
     }, [setValue]);
 
+    const clearClient = useCallback(() => {
+        setSelectedClient(null);
+        setValue('clientName', '');
+        setValue('clientPhone', '');
+    }, [setValue]);
+
     const setQuickTime = (type: 'tmrw_10' | 'today_4' | 'next_week') => {
         let date = new Date();
         switch (type) {
@@ -153,7 +159,7 @@ const AddMeetingScreen = () => {
         const newMeeting: Meeting = {
             id: newId,
             userId: user?.id || 'unknown',
-            accessKey: user?.accessKey || 'default', // Fallback for type safety
+            accessKey: user?.accessKey || 'default',
             clientId: selectedClient?.id || uuidv4(),
             clientName: data.clientName,
             clientPhone: data.clientPhone || '',
@@ -182,7 +188,7 @@ const AddMeetingScreen = () => {
 
         notificationService.scheduleMeetingReminder(newMeeting);
 
-        Alert.alert('Success', 'Meeting scheduled!', [{ text: 'OK', onPress: () => navigation.goBack() }]);
+        navigation.goBack();
     };
 
     const filteredClients = clients.filter(c =>
@@ -197,82 +203,104 @@ const AddMeetingScreen = () => {
             contentContainerStyle={styles.content}
             keyboardShouldPersistTaps="handled"
         >
-
             {/* 1. WHO SECTION */}
             <SectionHeader icon={Target} title="Client Details" />
 
             <View style={styles.card}>
-                <View style={styles.searchWrapper}>
-                    <Search size={18} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
-                    <TextInput
-                        placeholder="Filter clients..."
-                        style={styles.searchField}
-                        value={clientSearch}
-                        onChangeText={setClientSearch}
-                        placeholderTextColor={theme.colors.textSecondary}
-                    />
-                </View>
-
-                {loadingClients ? (
-                    <ActivityIndicator style={{ marginVertical: 10 }} />
+                {selectedClient ? (
+                    <View style={styles.selectedClientCard}>
+                        <View style={styles.selectedClientHeader}>
+                            <View style={styles.clientTag}>
+                                <Check size={12} color="#15803D" strokeWidth={3} />
+                                <Text style={styles.clientTagText}>Selected Client</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.clearClientBtn}
+                                onPress={clearClient}
+                                activeOpacity={0.7}
+                            >
+                                <X size={14} color="#EF4444" />
+                                <Text style={styles.clearClientText}>Change</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={styles.selectedClientName}>{selectedClient.name}</Text>
+                        <Text style={styles.selectedClientPhone}>{selectedClient.phone}</Text>
+                    </View>
                 ) : (
-                    <View style={styles.clientSelector}>
-                        <FlatList
-                            data={filteredClients}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            keyExtractor={item => item.id}
-                            nestedScrollEnabled={true} // Fixed nesting warning
-                            renderItem={({ item }) => (
-                                <QuickChip
-                                    label={item.name}
-                                    active={selectedClient?.id === item.id}
-                                    onPress={() => selectClient(item)}
+                    <>
+                        <View style={styles.searchWrapper}>
+                            <Search size={18} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
+                            <TextInput
+                                placeholder="Filter clients..."
+                                style={styles.searchField}
+                                value={clientSearch}
+                                onChangeText={setClientSearch}
+                                placeholderTextColor={theme.colors.textSecondary}
+                            />
+                        </View>
+
+                        {loadingClients ? (
+                            <ActivityIndicator style={{ marginVertical: 10 }} />
+                        ) : (
+                            <View style={styles.clientSelector}>
+                                <FlatList<Client>
+                                    data={filteredClients}
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    keyExtractor={(item: Client) => item.id}
+                                    nestedScrollEnabled={true}
+                                    renderItem={({ item }: { item: Client }) => (
+                                        <QuickChip
+                                            label={item.name}
+                                            active={false}
+                                            onPress={() => selectClient(item)}
+                                        />
+                                    )}
+                                    ListHeaderComponent={
+                                        <TouchableOpacity
+                                            style={styles.addClientBtn}
+                                            onPress={() => navigation.navigate('AddClient')}
+                                        >
+                                            <Plus size={16} color={theme.colors.primary} style={{ marginRight: 4 }} />
+                                            <Text style={styles.addClientText}>New</Text>
+                                        </TouchableOpacity>
+                                    }
+                                />
+                            </View>
+                        )}
+
+                        <Text style={styles.subLabel}>Or Enter Client Manually</Text>
+
+                        <Controller
+                            control={control}
+                            name="clientName"
+                            render={({ field: { onChange, value } }) => (
+                                <TextInput
+                                    style={styles.input}
+                                    onChangeText={onChange}
+                                    value={value}
+                                    placeholder="Client Name"
+                                    placeholderTextColor={theme.colors.textSecondary}
                                 />
                             )}
-                            ListHeaderComponent={
-                                <TouchableOpacity
-                                    style={styles.addClientBtn}
-                                    onPress={() => navigation.navigate('AddClient')}
-                                >
-                                    <Plus size={16} color={theme.colors.primary} style={{ marginRight: 4 }} />
-                                    <Text style={styles.addClientText}>New</Text>
-                                </TouchableOpacity>
-                            }
                         />
-                    </View>
+                        <Controller
+                            control={control}
+                            name="clientPhone"
+                            render={({ field: { onChange, value } }) => (
+                                <TextInput
+                                    style={styles.input}
+                                    onChangeText={onChange}
+                                    value={value}
+                                    keyboardType="phone-pad"
+                                    placeholder="Phone Number (Required)"
+                                    placeholderTextColor={theme.colors.textSecondary}
+                                />
+                            )}
+                        />
+                        {errors.clientPhone && <Text style={styles.error}>{errors.clientPhone.message}</Text>}
+                    </>
                 )}
-
-                <Controller
-                    control={control}
-                    name="clientName"
-                    render={({ field: { onChange, value } }) => (
-                        <TextInput
-                            style={[styles.input, selectedClient && styles.readOnlyInput]}
-                            onChangeText={onChange}
-                            value={value}
-                            placeholder="Client Name"
-                            placeholderTextColor={theme.colors.textSecondary}
-                            editable={!selectedClient}
-                        />
-                    )}
-                />
-                <Controller
-                    control={control}
-                    name="clientPhone"
-                    render={({ field: { onChange, value } }) => (
-                        <TextInput
-                            style={[styles.input, selectedClient && styles.readOnlyInput]}
-                            onChangeText={onChange}
-                            value={value}
-                            keyboardType="phone-pad"
-                            placeholder="Phone Number (Required)"
-                            placeholderTextColor={theme.colors.textSecondary}
-                            editable={!selectedClient}
-                        />
-                    )}
-                />
-                {errors.clientPhone && <Text style={styles.error}>{errors.clientPhone.message}</Text>}
             </View>
 
             {/* 2. WHAT SECTION */}
@@ -426,6 +454,61 @@ const styles = StyleSheet.create({
         color: theme.colors.text,
         ...theme.shadows.soft,
     },
+    selectedClientCard: {
+        backgroundColor: '#F0FDF4',
+        borderWidth: 1.5,
+        borderColor: '#86EFAC',
+        borderRadius: theme.spacing.radius.m,
+        padding: 16,
+        marginBottom: 8,
+    },
+    selectedClientHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    clientTag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#DCFCE7',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: theme.spacing.radius.pill,
+    },
+    clientTagText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#15803D',
+        textTransform: 'uppercase',
+    },
+    clearClientBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: theme.spacing.radius.pill,
+        backgroundColor: '#FEE2E2',
+    },
+    clearClientText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#EF4444',
+    },
+    selectedClientName: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: theme.colors.text,
+        marginBottom: 2,
+    },
+    selectedClientPhone: {
+        fontSize: 14,
+        color: theme.colors.textSecondary,
+        fontWeight: '500',
+    },
+
     readOnlyInput: {
         backgroundColor: theme.colors.background,
         color: theme.colors.textSecondary,

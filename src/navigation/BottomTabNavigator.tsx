@@ -7,10 +7,7 @@ import { theme } from '../theme';
 import DashboardScreen from '../screens/DashboardScreen';
 import ClientListScreen from '../screens/ClientListScreen';
 import AllMeetingsScreen from '../screens/AllMeetingsScreen';
-import ComingSoonScreen from '../screens/ComingSoonScreen';
-
-// Placeholder screens
-const MenuScreen = () => <ComingSoonScreen title="Settings" icon={Menu} message="Profile settings and app preferences coming soon" />;
+import { SettingsScreen } from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -113,7 +110,7 @@ export const BottomTabNavigator = () => {
             />
 
             <Tab.Screen name="Clients" component={ClientListScreen} />
-            <Tab.Screen name="Menu" component={MenuScreen} />
+            <Tab.Screen name="Menu" component={SettingsScreen} />
         </Tab.Navigator>
     );
 };

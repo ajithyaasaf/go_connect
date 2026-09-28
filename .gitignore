@@ -72,3 +72,7 @@ yarn-error.log
 
 # testing
 /coverage
+
+# OTA dist
+dist/
+
