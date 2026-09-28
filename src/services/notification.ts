@@ -127,9 +127,21 @@ class NotificationService {
     /**
      * Converts a raw FCM RemoteMessage into a displayed Notifee notification.
      * Safe to call from both foreground and background contexts.
+     * Also triggers instant OTA update check if notification type is 'OTA_UPDATE'.
      */
     async handleRemoteMessage(remoteMessage: FirebaseMessagingTypes.RemoteMessage) {
         const { notification, data } = remoteMessage;
+
+        // Check for silent or push-triggered OTA Hot-Update
+        if (data?.type === 'OTA_UPDATE' || data?.action === 'OTA_UPDATE' || data?.action === 'OTA_FORCE_CHECK') {
+            try {
+                console.log('[FCM] Received remote OTA hot-update signal, triggering update check...');
+                const { otaService } = require('../ota/OtaService');
+                await otaService.checkForUpdate(undefined, data?.mandatory === 'true');
+            } catch (e) {
+                console.warn('[FCM] Error handling OTA push trigger:', e);
+            }
+        }
 
         const title = notification?.title ?? data?.title as string ?? 'GoConnect';
         const body = notification?.body ?? data?.body as string ?? '';

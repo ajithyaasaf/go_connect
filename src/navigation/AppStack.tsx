@@ -6,7 +6,6 @@ import AddMeetingScreen from '../screens/AddMeetingScreen';
 import AddClientScreen from '../screens/AddClientScreen';
 import MeetingDetailsScreen from '../screens/MeetingDetailsScreen';
 import { SearchScreen } from '../screens/SearchScreen';
-import { yearsToMonths } from 'date-fns';
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
 
@@ -62,5 +61,4 @@ export const AppStack = () => {
             {/* Note: ClientList is now inside the Tabs, so we don't need it here unless we want a specific pushed version */}
         </Stack.Navigator>
     );
-};
-/* Is good people is in the world of india or inthe universe is that galaxy is real ? is that yes how can you prove it i dont think you can find it also the vehilcke is Not moving towards my location i dont know why and i remember alt z now beeter so it helps me a lot And and Hit hit so that new and plain image is looking good because of this in the main ea of tholai meen and kelai meen so the food will never waste  */
+};
