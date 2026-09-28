@@ -58,8 +58,10 @@ if (!fs.existsSync(outputDir)) {
 // 2. Generate React Native Android JS Bundle
 console.log('\n[1/3] Bundling React Native JavaScript & Assets...');
 try {
-    const cliPath = path.join(projectRoot, 'node_modules', '@react-native-community', 'cli', 'build', 'bin.js');
-    const bundleCmd = `node "${cliPath}" bundle --platform android --dev false --entry-file index.js --bundle-output "${bundleOutputFile}" --assets-dest "${outputDir}" --reset-cache`;
+    const isWin = process.platform === 'win32';
+    const rnCmd = isWin ? 'npx.cmd react-native bundle' : 'npx react-native bundle';
+    const bundleCmd = `${rnCmd} --platform android --dev false --entry-file index.js --bundle-output "${bundleOutputFile}" --assets-dest "${outputDir}"`;
+    console.log(`> ${bundleCmd}`);
     execSync(bundleCmd, { cwd: projectRoot, stdio: 'inherit' });
     console.log('✓ React Native bundle compiled successfully.');
 } catch (error) {
