@@ -18,6 +18,7 @@ import { addDays, setHours, setMinutes, format, parseISO } from 'date-fns';
 import { Search, Plus, Calendar, Target, Activity, FileText, X, Check } from 'lucide-react-native';
 import { theme } from '../theme';
 import DatePicker from 'react-native-date-picker';
+import { useRemoteConfigStore } from '../services/remoteConfig';
 
 // --- Pure Sub-components (Moved outside for performance/stability) ---
 
@@ -40,6 +41,10 @@ const QuickChip = React.memo(({ label, onPress, active }: any) => (
 const AddMeetingScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+
+    // Remote Config
+    const remotePurposes = useRemoteConfigStore((s) => s.purposes);
+    const remoteActions = useRemoteConfigStore((s) => s.actions);
 
     // Services
     const addMeeting = useMeetingStore((s) => s.addMeeting);
@@ -309,7 +314,7 @@ const AddMeetingScreen = () => {
             <View style={styles.card}>
                 <Text style={styles.subLabel}>Primary Goal</Text>
                 <View style={styles.chipRow}>
-                    {['Sales', 'Follow-up', 'Review', 'General'].map(p => (
+                    {(remotePurposes && remotePurposes.length > 0 ? remotePurposes : ['Sales', 'Follow-up', 'Review', 'General']).map(p => (
                         <QuickChip
                             key={p}
                             label={p}
@@ -321,7 +326,7 @@ const AddMeetingScreen = () => {
 
                 <Text style={styles.subLabel}>Next Action</Text>
                 <View style={styles.chipRow}>
-                    {['Call', 'Visit', 'Email'].map(a => (
+                    {(remoteActions && remoteActions.length > 0 ? remoteActions : ['Call', 'Visit', 'Email']).map(a => (
                         <QuickChip
                             key={a}
                             label={a}

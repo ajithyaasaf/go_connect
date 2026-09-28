@@ -12,8 +12,9 @@ import { DailyOverviewCard } from '../components/DailyOverviewCard'; // New Comp
 import { firestoreService } from '../services/firestore';
 import { theme } from '../theme';
 import { Layout } from '../components/Layout';
-import { Bell, Search, LogOut } from 'lucide-react-native';
+import { Bell, Search, LogOut, Info, AlertTriangle, AlertCircle, X } from 'lucide-react-native';
 import { authService } from '../services/auth';
+import { useRemoteConfigStore } from '../services/remoteConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -62,6 +63,13 @@ const DashboardScreen = () => {
         };
     }, [meetings]);
 
+    const isMaintenance = useRemoteConfigStore((s) => s.isMaintenance);
+    const maintenanceMessage = useRemoteConfigStore((s) => s.maintenanceMessage);
+    const announcement = useRemoteConfigStore((s) => s.announcement);
+    const [dismissedAnnouncementId, setDismissedAnnouncementId] = React.useState<string | null>(null);
+
+    const showAnnouncement = announcement && announcement.active && dismissedAnnouncementId !== announcement.id;
+
     return (
         <Layout>
             <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
@@ -95,6 +103,47 @@ const DashboardScreen = () => {
                         </TouchableOpacity>
                     </View>
                 </View>
+
+                {/* Maintenance Alert Banner */}
+                {isMaintenance && (
+                    <View style={styles.maintenanceBanner}>
+                        <AlertTriangle size={20} color="#DC2626" style={{ marginRight: 10 }} />
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.maintenanceTitle}>Scheduled Maintenance</Text>
+                            <Text style={styles.maintenanceText}>{maintenanceMessage}</Text>
+                        </View>
+                    </View>
+                )}
+
+                {/* Dynamic Remote Announcement Card */}
+                {showAnnouncement && announcement && (
+                    <View style={[
+                        styles.announcementCard,
+                        announcement.type === 'alert' && styles.announcementAlert,
+                        announcement.type === 'warning' && styles.announcementWarning,
+                    ]}>
+                        <View style={styles.announcementIconWrapper}>
+                            {announcement.type === 'alert' ? (
+                                <AlertCircle size={20} color="#DC2626" />
+                            ) : announcement.type === 'warning' ? (
+                                <AlertTriangle size={20} color="#D97706" />
+                            ) : (
+                                <Info size={20} color={theme.colors.primary} />
+                            )}
+                        </View>
+                        <View style={{ flex: 1, paddingRight: 8 }}>
+                            <Text style={styles.announcementTitle}>{announcement.title}</Text>
+                            <Text style={styles.announcementBody}>{announcement.message}</Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => setDismissedAnnouncementId(announcement.id)}
+                            style={styles.announcementClose}
+                            activeOpacity={0.7}
+                        >
+                            <X size={16} color={theme.colors.textSecondary} />
+                        </TouchableOpacity>
+                    </View>
+                )}
 
                 {/* Hero Section */}
                 <DailyOverviewCard />
@@ -224,7 +273,67 @@ const styles = StyleSheet.create({
     },
     emptySub: {
         ...theme.typography.caption
-    }
+    },
+    maintenanceBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FEF2F2',
+        borderLeftWidth: 4,
+        borderLeftColor: '#DC2626',
+        padding: 14,
+        marginHorizontal: 24,
+        marginBottom: 16,
+        borderRadius: 12,
+    },
+    maintenanceTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#991B1B',
+        marginBottom: 2,
+    },
+    maintenanceText: {
+        fontSize: 12,
+        color: '#B91C1C',
+        lineHeight: 16,
+    },
+    announcementCard: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: '#EFF6FF',
+        borderLeftWidth: 4,
+        borderLeftColor: theme.colors.primary,
+        padding: 14,
+        marginHorizontal: 24,
+        marginBottom: 16,
+        borderRadius: 12,
+        ...theme.shadows.soft,
+    },
+    announcementAlert: {
+        backgroundColor: '#FEF2F2',
+        borderLeftColor: '#DC2626',
+    },
+    announcementWarning: {
+        backgroundColor: '#FFFBEB',
+        borderLeftColor: '#D97706',
+    },
+    announcementIconWrapper: {
+        marginRight: 10,
+        marginTop: 2,
+    },
+    announcementTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: theme.colors.text,
+        marginBottom: 2,
+    },
+    announcementBody: {
+        fontSize: 12,
+        color: theme.colors.textSecondary,
+        lineHeight: 16,
+    },
+    announcementClose: {
+        padding: 4,
+    },
 });
 
 export default DashboardScreen;

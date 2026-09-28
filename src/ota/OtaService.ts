@@ -1,14 +1,17 @@
-import { NativeModules, NativeEventEmitter, Platform, Alert } from 'react-native';
+import { NativeModules, NativeEventEmitter, Platform, Alert, AppState, AppStateStatus } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { useOtaStore } from './useOtaStore';
 import { OtaRelease, OtaChannel, OtaDownloadProgressEvent, NativeAppVersionInfo, NativeBundleInfo } from './types';
 
 const { GoConnectOTA } = NativeModules;
+const AUTO_CHECK_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes throttle
 
 class OtaService {
     private eventEmitter: NativeEventEmitter | null = null;
     private progressSubscription: any = null;
+    private appStateSubscription: any = null;
     private isInitialized = false;
+    private lastAutoCheckTimestamp = 0;
 
     constructor() {
         if (GoConnectOTA) {
@@ -52,12 +55,27 @@ class OtaService {
                 );
             }
 
-            // 4. Background update check
+            // 4. Background update check on startup
             setTimeout(() => {
+                this.lastAutoCheckTimestamp = Date.now();
                 this.checkForUpdate(undefined, false).catch(err => {
                     console.warn('[OTA] Background update check failed:', err);
                 });
             }, 3000); // 3 second delay after launch to avoid competing with initial layout
+
+            // 5. Check for updates when app returns to foreground
+            this.appStateSubscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+                if (nextAppState === 'active') {
+                    const now = Date.now();
+                    if (now - this.lastAutoCheckTimestamp > AUTO_CHECK_INTERVAL_MS) {
+                        this.lastAutoCheckTimestamp = now;
+                        console.log('[OTA] App resumed to foreground, checking for updates...');
+                        this.checkForUpdate(undefined, false).catch(err => {
+                            console.warn('[OTA] Foreground update check failed:', err);
+                        });
+                    }
+                }
+            });
         } catch (error) {
             console.error('[OTA] Initialization error:', error);
         }
@@ -263,6 +281,10 @@ class OtaService {
         if (this.progressSubscription) {
             this.progressSubscription.remove();
             this.progressSubscription = null;
+        }
+        if (this.appStateSubscription) {
+            this.appStateSubscription.remove();
+            this.appStateSubscription = null;
         }
     }
 }
